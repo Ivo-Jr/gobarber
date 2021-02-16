@@ -8,17 +8,16 @@ import databaseConfig from '../config/database';
 const models = [User];
 
 class Database {
-  constructor() {
-    this.init();
+    constructor() {
+        this.init();
+    }
 
-  }
+    // O metodo init() fará a conexão com o banco de daods e exporta os models.
+    init() {
+        this.connection = new Sequelize(databaseConfig);
 
-  // O metodo init() fará a conexão com o banco de daods e exporta os models.
-  init() {
-    this.connection = new Sequelize(databaseConfig);
-
-    models.map(model => model.init(this.connection));
-  }
+        models.map((model) => model.init(this.connection));
+    }
 }
 
 export default new Database();
