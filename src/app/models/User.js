@@ -25,6 +25,12 @@ class User extends Model {
         return this;
     }
 
+    // Relacionamento com a tab. users e a tab. files para add a coluna 'avatar_id'
+    static associate(models) {
+        this.belongsTo(models.File, { foreignKey: 'avatar_id' });
+    }
+
+    // Salvando a referencia de um id de arquivo dentro da tabela de usuários
     checkPassword(password) {
         return bcrypt.compare(password, this.password_hash);
     }

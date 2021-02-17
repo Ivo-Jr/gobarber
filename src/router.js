@@ -18,6 +18,7 @@ routes.use(authMiddleware);
 
 routes.put('/users', UserController.update);
 
+// "upload.single('file')" -> atuação do multer nas rotas.
 routes.post('/files', upload.single('file'), FileController.store);
 
 export default routes;
