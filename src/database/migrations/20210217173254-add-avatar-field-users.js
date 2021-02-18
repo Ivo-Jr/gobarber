@@ -1,4 +1,5 @@
-// Migration que adicionou uma nova coluna chamada "avatar_id" à tabela users.
+// Migration que adicionou uma nova coluna chamada "avatar_id" à tabela users;
+// obs: addColumn('nome da tab. que executará o método "addColumn" ', 'nome da coluna que será adicionada');
 module.exports = {
     up: async (queryInterface, Sequelize) =>
         queryInterface.addColumn('users', 'avatar_id', {
