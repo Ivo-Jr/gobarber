@@ -7,6 +7,15 @@ class AppointmentController {
     async index(request, response) {
         const appointments = await Appointment.findAll({
             where: { user_id: request.userId, canceled_at: null },
+            order: ['date'],
+            attributes: ['id', 'date'],
+            include: [
+                {
+                    model: User,
+                    as: 'provider',
+                    attributes: ['id', 'name'],
+                },
+            ],
         });
 
         return response.json(appointments);
