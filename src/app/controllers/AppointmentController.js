@@ -3,6 +3,7 @@ import { startOfHour, parseISO, isBefore } from 'date-fns';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
+import Notification from '../schemas/Notification';
 
 class AppointmentController {
     async index(request, response) {
@@ -87,6 +88,9 @@ class AppointmentController {
             provider_id,
             date: hourStart,
         });
+
+        // Notify appointment provider:
+        await Notification.create({});
 
         return response.json(appointment);
     }
