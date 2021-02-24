@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore } from 'date-fns';
+import { startOfHour, parseISO, isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
@@ -49,8 +50,17 @@ class AppointmentController {
         // Check if provider_id is a provider:
         // "provider_id" será um número e no segundo parametro dentro do 'where' é checaddo se o provider é true, isto é, se ele é um prestador de serviço.
         const checkIsProvider = await User.findOne({
-            where: { id: provider_id, provider: true },
+            where: {
+                id: provider_id,
+                provider: true,
+            },
         });
+
+        if (request.userId === provider_id) {
+            return response.status(401).json({
+                error: `You can't create appointments with yourself`,
+            });
+        }
 
         if (!checkIsProvider) {
             return response.status(401).json({
@@ -90,7 +100,17 @@ class AppointmentController {
         });
 
         // Notify appointment provider:
-        await Notification.create({});
+        const user = await User.findByPk(request.userId);
+        const formattedDate = format(
+            hourStart,
+            "'dia' dd 'de' MMMM', às' H:mm'h'",
+            { locale: pt }
+        );
+
+        await Notification.create({
+            content: `Novo agendamento de ${user.name} para ${formattedDate}`,
+            user: provider_id,
+        });
 
         return response.json(appointment);
     }
