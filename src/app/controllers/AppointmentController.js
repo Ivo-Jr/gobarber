@@ -1,15 +1,21 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore } from 'date-fns';
+import { startOfHour, parseISO, isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
+import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
-import Appointment from '../models/Appointment';
+import Notification from '../schemas/Notification';
 
 class AppointmentController {
     async index(request, response) {
+        const { page = 1 } = request.query;
+
         const appointments = await Appointment.findAll({
             where: { user_id: request.userId, canceled_at: null },
             order: ['date'],
             attributes: ['id', 'date'],
+            limit: 20,
+            offset: (page - 1) * 20,
             include: [
                 {
                     model: User,
@@ -19,6 +25,7 @@ class AppointmentController {
                         {
                             model: File,
                             as: 'avatar',
+                            attributes: ['id', 'path', 'url'],
                         },
                     ],
                 },
@@ -62,6 +69,7 @@ class AppointmentController {
         }
 
         // Check date availability
+        // (O agendador/prestador de serviço, tem um agendamento nesse horário?)
         const checkAvailability = await Appointment.findOne({
             where: {
                 provider_id,
@@ -77,10 +85,24 @@ class AppointmentController {
         }
 
         // 'request.userId' é o id do usuário que está logado na sessão. Pegamos esse id do payload do JWT.
+        // Quando passamos o 'hourStart' na craiação do agendamento em "date: hourStart", garantimos que o agendamento será feito em horas exatas com os minutos zerados.
         const appointment = await Appointment.create({
             user_id: request.userId,
             provider_id,
             date: hourStart,
+        });
+
+        // Notify appointment provider:
+        const user = await User.findByPk(request.userId);
+        const formattedDate = format(
+            hourStart,
+            "'dia' dd 'de' MMMM', às' H:mm'h'",
+            { locale: pt }
+        );
+
+        await Notification.create({
+            content: `Novo agendamento de ${user.name} para ${formattedDate}`,
+            user: provider_id,
         });
 
         return response.json(appointment);
