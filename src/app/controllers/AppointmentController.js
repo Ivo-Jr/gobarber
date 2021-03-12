@@ -1,10 +1,12 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore, format } from 'date-fns';
+import { startOfHour, parseISO, isBefore, format, subHours } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
 import Notification from '../schemas/Notification';
+
+import Mail from '../../lib/Mail';
 
 class AppointmentController {
     async index(request, response) {
@@ -49,9 +51,19 @@ class AppointmentController {
 
         // Check if provider_id is a provider:
         // "provider_id" será um número e no segundo parametro dentro do 'where' é checaddo se o provider é true, isto é, se ele é um prestador de serviço.
+        // userId é o usuário logado
         const checkIsProvider = await User.findOne({
-            where: { id: provider_id, provider: true },
+            where: {
+                id: provider_id,
+                provider: true,
+            },
         });
+
+        if (request.userId === provider_id) {
+            return response.status(401).json({
+                error: `You can't create appointments with yourself`,
+            });
+        }
 
         if (!checkIsProvider) {
             return response.status(401).json({
@@ -106,6 +118,49 @@ class AppointmentController {
         });
 
         return response.json(appointment);
+    }
+
+    async delete(request, response) {
+        const appointment = await Appointment.findByPk(request.params.id, {
+            include: [
+                {
+                    model: User,
+                    as: 'provider',
+                    attributes: ['name', 'email'],
+                },
+            ],
+        });
+
+        if (appointment.user_id !== request.userId) {
+            return response.status(401).json({
+                error: "You don't have permission to cancel this appointment.",
+            });
+        }
+
+        // Um agendamento só poderá ser cancelado com 2 horas de antecedência
+        const dateWithSub = subHours(appointment.date, 2);
+
+        if (isBefore(dateWithSub, new Date())) {
+            return response.status(401).json({
+                error: 'You can only cancel appointments 2 hours in advance.',
+            });
+        }
+
+        appointment.canceled_at = new Date();
+
+        await appointment.save();
+
+        // Mailtrap será utilizado apenas em ambiente de desenvolvimento;
+        // Envio de email para o provider pós cancelamento de agendamento;
+        // Subject -> Assunto do email;
+
+        await Mail.sendMail({
+            to: `${appointment.provider.name}  <${appointment.provider.email}>`,
+            subject: 'Agendamento cancelado',
+            text: 'Você tem um novo cancelamento!!!',
+        });
+
+        return response.json();
     }
 }
 
