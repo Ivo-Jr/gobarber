@@ -33,7 +33,7 @@ This project was developed with the following technologies:
 - [VS Code][vc] with [EditorConfig][vceditconfig] and [ESLint][vceslint]
 
 
-## :#128296: Other tools
+## :hammer: Other tools
 
 This project was developed with the following tools:
 
