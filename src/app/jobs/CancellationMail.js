@@ -8,7 +8,7 @@ class CancellationMail {
         return 'CancellationMail';
     }
 
-    // Método handle, processa o nosso Job. Tarefa que vai executar quando o processo for executado
+    // Método handle, processa o nosso Job. Tarefa que vai executar quando o processo for executado;
     // Mailtrap será utilizado apenas em ambiente de desenvolvimento;
     // Envio de email para o provider pós cancelamento de agendamento;
     // Subject -> Assunto do email;
@@ -16,7 +16,7 @@ class CancellationMail {
         const { appointment } = data;
 
         await Mail.sendMail({
-            to: `${appointment.provider.name}  <${appointment.provider.email}>`,
+            to: `${appointment.provider.name} <${appointment.provider.email}>`,
             subject: 'Agendamento cancelado',
             template: 'cancellation',
             context: {
